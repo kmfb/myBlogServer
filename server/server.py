@@ -19,6 +19,14 @@ def index():
     rv = cur.fetchall()
     return jsonify(rv)
 
+@app.route('/api/v1/article/<id>')
+def delete_task(id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM blog.posts \
+        WHERE id = {}".format(id))
+    rv = cur.fetchall()
+    return jsonify(rv[0])
+
 if __name__ == '__main__':
     config = {
         'host': '0.0.0.0',
