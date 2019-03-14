@@ -12,6 +12,15 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 CORS(app)
 
+def postValues(form):
+    title = form.get('title', None)
+    summery = form.get('summery', None)
+    content = form.get('content', None)
+    tags = form.get('tags', None)
+    date = form.get('date', None)
+    p_type = form.get('type', None)
+    return title, summery, content, tags, date, p_type
+
 @app.route('/api/v1/articles')
 def index():
     cur = mysql.connection.cursor()
@@ -20,12 +29,30 @@ def index():
     return jsonify(rv)
 
 @app.route('/api/v1/article/<id>')
-def delete_task(id):
+def get_task(id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM blog.posts \
         WHERE id = {}".format(id))
     rv = cur.fetchall()
     return jsonify(rv[0])
+
+@app.route('/api/v1/article', methods=['POST'])
+def add_task():
+    form = request.get_json()
+    title, summery, content, tags, date, p_type =  postValues(form)
+    cur = mysql.connection.cursor()
+    cur.execute("INSERT INTO blog.posts(title, summery, content, tags, date, type) \
+    values('{}', '{}', '{}', '{}', '{}', '{}')".format(title, summery, content, tags, date, p_type))
+    mysql.connection.commit()
+    if form != None:
+        result = 'success'
+    else:
+        result = 'fault'
+    return jsonify({'result': result})
+
+
+
+
 
 if __name__ == '__main__':
     config = {
