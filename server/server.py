@@ -50,6 +50,25 @@ def add_task():
         result = 'fault'
     return jsonify({'result': result})
 
+@app.route('/api/v1/user', methods=['POST'])
+def get_user():
+    form = request.get_json()
+    username = form.get('username', None)
+    password = form.get('password', None)
+   
+    cur = mysql.connection.cursor()
+    rv = cur.execute("SELECT * FROM blog.users \
+        WHERE username = '{}' AND password = '{}'".format(username, password))
+    if rv != 0:
+        res = {
+            'code': 200
+        }
+    else:
+        res = {
+            'code': 403
+        }
+    return jsonify({'data': res})
+
 
 
 
