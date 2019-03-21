@@ -1,8 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 from flask_mysqldb import MySQL
+import datetime
+import jwt
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret'
 app.config['MYSQL_HOST'] = 'db'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = '7798984'
@@ -55,18 +58,48 @@ def get_user():
     form = request.get_json()
     username = form.get('username', None)
     password = form.get('password', None)
-   
+
     cur = mysql.connection.cursor()
     rv = cur.execute("SELECT * FROM blog.users \
         WHERE username = '{}' AND password = '{}'".format(username, password))
     if rv != 0:
+        token = jwt.encode({
+            'user': username,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+            },
+            app.config['SECRET_KEY']
+            )
+        t = token.decode('utf-8')
         res = {
-            'code': 200
+            'code': 200,
+            'token': t
         }
     else:
         res = {
             'code': 403
         }
+    return jsonify({'data': res})
+
+@app.route('/api/v1/token', methods=['POST'])
+def validate_token():
+    req = request.get_json()
+    token = req.get('token', None)
+    if not token:
+        res = {
+            'code': 403
+        }
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'])
+        print(data)
+        res = {
+            'code': 200
+        }
+    except:
+        print('except')
+        res = {
+            'code': 403
+        }
+
     return jsonify({'data': res})
 
 
@@ -80,7 +113,3 @@ if __name__ == '__main__':
         'debug': True,
     }
     app.run(**config)
-
-
-
-
